@@ -11,13 +11,14 @@
 #include <string.h>
 
 #include "stm32l1xx_hal.h"
-#include "stm32l1xx_hal_uart.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
 
 #include "main.h"
 #include "debug_log.h"
+#include "ssd1306.h"
+#include "ssd1306_fonts.h"
 
 //--------------------------------------------------------------------------------
 
@@ -104,17 +105,18 @@ static void led_change_state(bool state)
 
 static void task_led(void* params)
 {
-    led_change_state(false);
-    uint8_t i = 0;
+    ssd1306_init();
+    LOG("Writing\n\r");
+    ssd1306_write_string("OLED test", Font_11x18, COLOR_WHITE);
+    ssd1306_update_screen();
+    LOG("Written!\n\r");
 
     while (1)
     {
-        LOG("test #\n\r");
-
+        LOG("TEST\n\r");
         led_change_state(true);
         vTaskDelay(1000);
         led_change_state(false);
-
         vTaskDelay(1000);
     }
 }
@@ -130,8 +132,9 @@ int main(void)
     system_clock_config();
     debug_log_init();
     led_init();
+    ssd1306_i2c_init();
 
-    if (xTaskCreate(task_led, "led", configMINIMAL_STACK_SIZE, NULL, 3, NULL) != pdPASS) {
+    if (xTaskCreate(task_led, "led", configMINIMAL_STACK_SIZE*4, NULL, 3, NULL) != pdPASS) {
         led_change_state(true);
     }
 
