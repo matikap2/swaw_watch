@@ -26,7 +26,7 @@
 #endif
 
 #if CFG_MAIN_LOG_EN
-#define LOG(fmt, ...)   debug_log("[MAIN] " fmt, __VA_ARGS__)
+#define LOG(fmt, ...)   debug_log("[MAIN] " fmt, ##__VA_ARGS__)
 #else
 #define LOG(fmt, ...)   do { } while (0)
 #endif
@@ -109,7 +109,7 @@ static void task_led(void* params)
 
     while (1)
     {
-        LOG("test #%d\n\r", ++i);
+        LOG("test #\n\r");
 
         led_change_state(true);
         vTaskDelay(1000);
