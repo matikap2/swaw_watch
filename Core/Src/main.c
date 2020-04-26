@@ -17,9 +17,23 @@
 #include "task.h"
 
 #include "main.h"
+#include "debug_log.h"
 
 //--------------------------------------------------------------------------------
 
+#ifndef CFG_MAIN_LOG_EN
+#define CFG_MAIN_LOG_EN 1
+#endif
+
+#if CFG_MAIN_LOG_EN
+#define LOG(fmt, ...)   debug_log("[MAIN] " fmt, __VA_ARGS__)
+#else
+#define LOG(fmt, ...)   do { } while (0)
+#endif
+
+//--------------------------------------------------------------------------------
+
+/* Defines */
 #define USER_LED_PORT   GPIOA
 #define USER_LED_PIN    GPIO_PIN_5
 
@@ -91,26 +105,16 @@ static void led_change_state(bool state)
 static void task_led(void* params)
 {
     led_change_state(false);
-    uint8_t i = 69;
+    uint8_t i = 0;
 
     while (1)
     {
-        if (debug_log("test %d", i))
-        {
-            led_change_state(true);
-            vTaskDelay(1000);
-            led_change_state(false);
-        }
-        else
-        {
-            led_change_state(true);
-            vTaskDelay(200);
-            led_change_state(false);
-            vTaskDelay(200);
-            led_change_state(true);
-            vTaskDelay(200);
-            led_change_state(false);
-        }
+        LOG("test #%d\n\r", ++i);
+
+        led_change_state(true);
+        vTaskDelay(1000);
+        led_change_state(false);
+
         vTaskDelay(1000);
     }
 }
