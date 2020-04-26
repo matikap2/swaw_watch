@@ -8,8 +8,10 @@
 /* Includes */
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "stm32l1xx_hal.h"
+#include "stm32l1xx_hal_uart.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -88,12 +90,27 @@ static void led_change_state(bool state)
 
 static void task_led(void* params)
 {
-    bool state = true;
+    led_change_state(false);
+    uint8_t i = 69;
 
     while (1)
     {
-        led_change_state(state);
-        state ^= true;
+        if (debug_log("test %d", i))
+        {
+            led_change_state(true);
+            vTaskDelay(1000);
+            led_change_state(false);
+        }
+        else
+        {
+            led_change_state(true);
+            vTaskDelay(200);
+            led_change_state(false);
+            vTaskDelay(200);
+            led_change_state(true);
+            vTaskDelay(200);
+            led_change_state(false);
+        }
         vTaskDelay(1000);
     }
 }
@@ -107,6 +124,7 @@ int main(void)
     HAL_Init();
 
     system_clock_config();
+    debug_log_init();
     led_init();
 
     if (xTaskCreate(task_led, "led", configMINIMAL_STACK_SIZE, NULL, 3, NULL) != pdPASS) {
