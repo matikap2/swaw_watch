@@ -11,12 +11,23 @@
 
 #include "stm32l1xx_hal.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 #include "main.h"
+
+//--------------------------------------------------------------------------------
+
+#define USER_LED_PORT   GPIOA
+#define USER_LED_PIN    GPIO_PIN_5
 
 //--------------------------------------------------------------------------------
 
 /* Static function declarations */
 static void system_clock_config(void);
+static void led_init(void);
+static void led_change_state(bool state);
+static void task_led(void* params);
 
 //--------------------------------------------------------------------------------
 
@@ -55,6 +66,38 @@ static void system_clock_config(void)
         /* nothing */
     }
 }
+
+static void led_init(void)
+{
+    GPIO_InitTypeDef GPIO_InitStruct;
+
+    __GPIOA_CLK_ENABLE();
+
+    GPIO_InitStruct.Pin = USER_LED_PIN;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+
+    HAL_GPIO_Init(USER_LED_PORT, &GPIO_InitStruct);
+}
+
+static void led_change_state(bool state)
+{
+    HAL_GPIO_WritePin(USER_LED_PORT, USER_LED_PIN, state);
+}
+
+static void task_led(void* params)
+{
+    bool state = true;
+
+    while (1)
+    {
+        led_change_state(state);
+        state ^= true;
+        vTaskDelay(1000);
+    }
+}
+
 //--------------------------------------------------------------------------------
 
 /* Global functions */
@@ -64,9 +107,11 @@ int main(void)
     HAL_Init();
 
     system_clock_config();
+    led_init();
 
-    while (1)
-    {
-
+    if (xTaskCreate(task_led, "led", configMINIMAL_STACK_SIZE, NULL, 3, NULL) != pdPASS) {
+        led_change_state(true);
     }
+
+    vTaskStartScheduler();
 }
