@@ -53,6 +53,9 @@ void ssd1306_draw_pixel(uint8_t x, uint8_t y, enum ssd1306_color color);
 char ssd1306_write_char(char ch, FontDef Font, enum ssd1306_color color);
 char ssd1306_write_string(char* str, FontDef Font, enum ssd1306_color color);
 void ssd1306_set_cursor(uint8_t x, uint8_t y);
+void ssd1306_draw_line(int x_start, int y_start, int x_end, int y_end, enum ssd1306_color color);
+void ssd1306_draw_rectangle(int x, int y, uint16_t w, uint16_t h, enum ssd1306_color color);
+void ssd1306_draw_fill_rectangle(int x, int y, uint16_t w, uint16_t h, enum ssd1306_color color);
 
 //--------------------------------------------------------------------------------
 

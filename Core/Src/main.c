@@ -19,6 +19,7 @@
 #include "debug_log.h"
 #include "ssd1306.h"
 #include "ssd1306_fonts.h"
+#include "oled_app.h"
 
 //--------------------------------------------------------------------------------
 
@@ -105,19 +106,39 @@ static void led_change_state(bool state)
 
 static void task_led(void* params)
 {
-    ssd1306_init();
-    LOG("Writing\n\r");
-    ssd1306_write_string("OLED test", Font_11x18, COLOR_WHITE);
-    ssd1306_update_screen();
-    LOG("Written!\n\r");
+    struct oled_queue_msg test;
+    uint8_t i = 0;
+    uint8_t cnt = 0;
 
     while (1)
     {
-        LOG("TEST\n\r");
+        if (i > OLED_SHUTDOWN)
+        {
+            i = 0;
+        }
+        if (i == OLED_HR_MEASURMENT)
+        {
+            test.new_state = i;
+            cnt++;
+            if (cnt > 9)
+            {
+                cnt = 0;
+                i++;
+            }
+        }
+        else
+        {
+            test.new_state = i++;
+        }
+
+        test.heart_rate = 69;
+        test.sp02 = 98;
+        oled_app_queue_add(&test);
+
         led_change_state(true);
-        vTaskDelay(1000);
+        vTaskDelay(500);
         led_change_state(false);
-        vTaskDelay(1000);
+        vTaskDelay(500);
     }
 }
 
@@ -128,15 +149,21 @@ static void task_led(void* params)
 int main(void)
 {
     HAL_Init();
-
     system_clock_config();
     debug_log_init();
     led_init();
     ssd1306_i2c_init();
 
-    if (xTaskCreate(task_led, "led", configMINIMAL_STACK_SIZE*4, NULL, 3, NULL) != pdPASS) {
-        led_change_state(true);
+    if (oled_app_queue_create())
+    {
+        if (xTaskCreate(task_led, "led", configMINIMAL_STACK_SIZE*4, NULL, 3, NULL) != pdPASS)
+        {
+            led_change_state(true);
+        }
+
+        oled_app_task_create();
     }
+
 
     vTaskStartScheduler();
 }

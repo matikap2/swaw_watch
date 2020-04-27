@@ -8,6 +8,7 @@
 /* Includes */
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "stm32l1xx_hal.h"
 
@@ -36,6 +37,8 @@
 
 #define SSD1306_I2C_ADDR        (0x3C << 1)
 
+#define SWAP_INT(_a, _b) { int t = _a; _a = _b; _b = t; }
+
 //--------------------------------------------------------------------------------
 
 /* Static */
@@ -54,6 +57,10 @@ static struct ssd1306_context ctx;
 static void ssd1306_write_cmd(uint8_t byte);
 static void ssd1306_write_data(uint8_t* buffer, size_t buff_size);
 
+static void ssd1306_write_line(int x_start, int y_start, int x_end, int y_end, enum ssd1306_color color);
+static void ssd1306_write_fast_vline(int x_start, int y_start, int h, enum ssd1306_color color);
+static void ssd1306_write_fast_hline(int x_start, int y_start, int w, enum ssd1306_color color);
+
 //--------------------------------------------------------------------------------
 
 /* Static functions */
@@ -65,6 +72,68 @@ static void ssd1306_write_cmd(uint8_t byte) {
 static void ssd1306_write_data(uint8_t* buffer, size_t buff_size)
 {
 	HAL_I2C_Mem_Write(&ctx.handle, SSD1306_I2C_ADDR, 0x40, 1, buffer, buff_size, HAL_MAX_DELAY);
+}
+
+static void ssd1306_write_line(int x_start, int y_start, int x_end, int y_end, enum ssd1306_color color)
+{
+    int16_t steep = abs(y_end - y_start) > abs(x_end - x_start);
+
+    if (steep)
+    {
+        SWAP_INT(x_start, y_start);
+        SWAP_INT(x_end, y_end);
+    }
+
+    if (x_start > x_end)
+    {
+        SWAP_INT(x_start, x_end);
+        SWAP_INT(y_start, y_end);
+    }
+
+    int16_t dx, dy;
+    dx = x_end - x_start;
+    dy = abs(y_end - y_start);
+
+    int16_t err = dx / 2;
+    int16_t ystep;
+
+    if (y_start < y_end)
+    {
+        ystep = 1;
+    }
+    else
+    {
+        ystep = -1;
+    }
+
+    for (; x_start<=x_end; x_start++)
+    {
+        if (steep)
+        {
+
+            ssd1306_draw_pixel(y_start, x_start, color);
+        }
+        else
+        {
+            ssd1306_draw_pixel(x_start, y_start, color);
+        }
+        err -= dy;
+        if (err < 0)
+        {
+            y_start += ystep;
+            err += dx;
+        }
+    }
+}
+
+static void ssd1306_write_fast_vline(int x_start, int y_start, int h, enum ssd1306_color color)
+{
+    ssd1306_write_line(x_start, y_start, x_start, y_start+h-1, color);
+}
+
+static void ssd1306_write_fast_hline(int x_start, int y_start, int w, enum ssd1306_color color)
+{
+    ssd1306_write_line(x_start, y_start, x_start+w-1, y_start, color);
 }
 
 //--------------------------------------------------------------------------------
@@ -307,7 +376,8 @@ char ssd1306_write_char(char ch, FontDef Font, enum ssd1306_color color) {
 char ssd1306_write_string(char* str, FontDef Font, enum ssd1306_color color)
 {
     // Write until null-byte
-    while (*str) {
+    while (*str)
+    {
         if (ssd1306_write_char(*str, Font, color) != *str)
         {
             // Char could not be written
@@ -326,4 +396,49 @@ char ssd1306_write_string(char* str, FontDef Font, enum ssd1306_color color)
 void ssd1306_set_cursor(uint8_t x, uint8_t y) {
     ctx.ssd1306.current_x = x;
     ctx.ssd1306.current_y = y;
+}
+
+void ssd1306_draw_line(int x_start, int y_start, int x_end, int y_end, enum ssd1306_color color)
+{
+    if (x_start == x_end)
+    {
+        if( y_start > y_end)
+        {
+            SWAP_INT(y_start, y_end);
+        }
+
+        ssd1306_write_fast_vline(x_start, y_start, y_end - y_start + 1, color);
+    }
+    else if (y_start == y_end)
+    {
+        if(x_start > x_end)
+        {
+            SWAP_INT(x_start, x_end);
+        }
+
+        ssd1306_write_fast_hline(x_start, y_start, x_end - x_start + 1, color);
+    }
+    else
+    {
+        ssd1306_write_line(x_start, y_start, x_end, y_end, color);
+    }
+}
+
+void ssd1306_draw_rectangle(int x, int y, uint16_t w, uint16_t h, enum ssd1306_color color)
+{
+
+    ssd1306_write_fast_hline(x, y, w, color);
+    ssd1306_write_fast_hline(x, y+h-1, w, color);
+    ssd1306_write_fast_vline(x, y, h, color);
+    ssd1306_write_fast_vline(x+w-1, y, h, color);
+
+}
+
+void ssd1306_draw_fill_rectangle(int x, int y, uint16_t w, uint16_t h, enum ssd1306_color color)
+{
+    for (int i=x; i<x+w; i++)
+    {
+        ssd1306_write_fast_vline(i, y, h, color);
+    }
+
 }

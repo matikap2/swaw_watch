@@ -20,10 +20,30 @@ extern "C" {
 
 //--------------------------------------------------------------------------------
 
+enum oled_state
+{
+    OLED_OFF,
+    OLED_STARTUP,
+    OLED_TIME_DISPLAY,
+    OLED_HR_MEASURMENT,
+    OLED_HR_DISPLAY,
+    OLED_SHUTDOWN
+};
+
+struct oled_queue_msg
+{
+    enum oled_state new_state;
+    uint8_t heart_rate;
+    uint8_t sp02;
+};
 
 //--------------------------------------------------------------------------------
 
-void task_oled(void* params);
+bool oled_app_queue_create(void);
+bool oled_app_queue_add(struct oled_queue_msg *msg);
+
+bool oled_app_task_create(void);
+void oled_app_task(void* params);
 
 //--------------------------------------------------------------------------------
 
