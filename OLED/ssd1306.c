@@ -157,7 +157,7 @@ void ssd1306_i2c_init(void)
 
     ctx.handle.Instance = SSD1306_I2Cx;
 
-    ctx.handle.Init.ClockSpeed = 100000; // 37 FPS
+    ctx.handle.Init.ClockSpeed = 100000;
     ctx.handle.Init.DutyCycle = I2C_DUTYCYCLE_2;
     ctx.handle.Init.OwnAddress1 = 0;
     ctx.handle.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;

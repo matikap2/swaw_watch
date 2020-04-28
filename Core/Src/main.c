@@ -19,7 +19,9 @@
 #include "debug_log.h"
 #include "ssd1306.h"
 #include "ssd1306_fonts.h"
+#include "max30100.h"
 #include "oled_app.h"
+#include "hr_app.h"
 
 //--------------------------------------------------------------------------------
 
@@ -112,6 +114,7 @@ static void task_led(void* params)
 
     while (1)
     {
+        /* QUEUE TEST */
         if (i > OLED_SHUTDOWN)
         {
             i = 0;
@@ -135,6 +138,7 @@ static void task_led(void* params)
         test.sp02 = 98;
         oled_app_queue_add(&test);
 
+        /* LEDS */
         led_change_state(true);
         vTaskDelay(500);
         led_change_state(false);
@@ -162,6 +166,8 @@ int main(void)
         }
 
         oled_app_task_create();
+
+        hr_app_task_create();
     }
 
 
