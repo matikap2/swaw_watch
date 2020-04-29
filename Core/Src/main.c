@@ -22,6 +22,7 @@
 #include "max30100.h"
 #include "oled_app.h"
 #include "hr_app.h"
+#include "ui.h"
 
 //--------------------------------------------------------------------------------
 
@@ -38,16 +39,13 @@
 //--------------------------------------------------------------------------------
 
 /* Defines */
-#define USER_LED_PORT   GPIOA
-#define USER_LED_PIN    GPIO_PIN_5
 
 //--------------------------------------------------------------------------------
 
 /* Static function declarations */
 static void system_clock_config(void);
-static void led_init(void);
-static void led_change_state(bool state);
-static void task_led(void* params);
+static void hardware_init(void);
+static void task_test(void* params);
 
 //--------------------------------------------------------------------------------
 
@@ -87,26 +85,16 @@ static void system_clock_config(void)
     }
 }
 
-static void led_init(void)
+static void hardware_init(void)
 {
-    GPIO_InitTypeDef GPIO_InitStruct;
-
-    __GPIOA_CLK_ENABLE();
-
-    GPIO_InitStruct.Pin = USER_LED_PIN;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-
-    HAL_GPIO_Init(USER_LED_PORT, &GPIO_InitStruct);
+    HAL_Init();
+    system_clock_config();
+    debug_log_init();
+    led_init();
+//    button_init();
 }
 
-static void led_change_state(bool state)
-{
-    HAL_GPIO_WritePin(USER_LED_PORT, USER_LED_PIN, state);
-}
-
-static void task_led(void* params)
+static void task_test(void* params)
 {
     struct oled_queue_msg test;
     uint8_t i = 0;
@@ -114,6 +102,8 @@ static void task_led(void* params)
 
     while (1)
     {
+//        bool btn = button_polling_readstate();
+//        LOG("BUTTON: %d\n", btn);
         /* QUEUE TEST */
         if (i > OLED_SHUTDOWN)
         {
@@ -136,13 +126,13 @@ static void task_led(void* params)
 
         test.heart_rate = 69;
         test.sp02 = 98;
-        oled_app_queue_add(&test);
+//        oled_app_queue_add(&test);
 
         /* LEDS */
         led_change_state(true);
-        vTaskDelay(500);
+        vTaskDelay(100);
         led_change_state(false);
-        vTaskDelay(500);
+        vTaskDelay(100);
     }
 }
 
@@ -152,24 +142,17 @@ static void task_led(void* params)
 
 int main(void)
 {
-    HAL_Init();
-    system_clock_config();
-    debug_log_init();
-    led_init();
-    ssd1306_i2c_init();
+    hardware_init();
+    button_interrupt_init();
 
     if (oled_app_queue_create())
     {
-        if (xTaskCreate(task_led, "led", configMINIMAL_STACK_SIZE*4, NULL, 3, NULL) != pdPASS)
-        {
-            led_change_state(true);
-        }
+        xTaskCreate(task_test, "test", configMINIMAL_STACK_SIZE*4, NULL, 3, NULL);
 
-        oled_app_task_create();
+//        oled_app_task_create();
 
-        hr_app_task_create();
+//        hr_app_task_create();
     }
-
 
     vTaskStartScheduler();
 }

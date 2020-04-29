@@ -194,11 +194,8 @@ void max30100_read_sensor(uint16_t *ir, uint16_t *red)
 {
   uint8_t temp[4] = {0};  // Temporary buffer for read values
 
-//  temp[0] = max30100_read(MAX30100_FIFO_DATA);  // Read four times from the FIFO
-//  temp[1] = max30100_read(MAX30100_FIFO_DATA);  // Read four times from the FIFO
-//  temp[2] = max30100_read(MAX30100_FIFO_DATA);  // Read four times from the FIFO
-//  temp[0] = max30100_read(MAX30100_FIFO_DATA);  // Read four times from the FIFO
   HAL_I2C_Mem_Read(&ctx.handle, MAX30100_I2C_ADDR, MAX30100_FIFO_DATA, I2C_MEMADD_SIZE_8BIT, &temp[0], 4, 250);
+
   *ir = (temp[0]<<8) | temp[1];    // Combine values to get the actual number
   *red = (temp[2]<<8) | temp[3];   // Combine values to get the actual number
 }

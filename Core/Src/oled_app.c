@@ -99,18 +99,19 @@ void oled_app_task(void* params)
     char buffer[16];
     volatile uint8_t meas_cnt = 0;
 
+    LOG("===> OLED task started!\n");
+
     ctx.state = OLED_OFF;
 
+    ssd1306_i2c_init();
     ssd1306_init();
     ssd1306_update_screen();
-
-    LOG("===> OLED task started!\n\r");
 
     while (1)
     {
         xQueueReceive(ctx.oled_queue, &msg, portMAX_DELAY );
 
-        LOG("Received msg! ID #%d\n\r", msg.new_state);
+        LOG("Received msg! ID #%d\n", msg.new_state);
         switch (msg.new_state)
         {
         case OLED_OFF:
