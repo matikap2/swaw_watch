@@ -102,37 +102,37 @@ static void task_test(void* params)
 
     while (1)
     {
-//        bool btn = button_polling_readstate();
-//        LOG("BUTTON: %d\n", btn);
-        /* QUEUE TEST */
-        if (i > OLED_SHUTDOWN)
-        {
-            i = 0;
-        }
-        if (i == OLED_HR_MEASURMENT)
-        {
-            test.new_state = i;
-            cnt++;
-            if (cnt > 9)
-            {
-                cnt = 0;
-                i++;
-            }
-        }
-        else
-        {
-            test.new_state = i++;
-        }
-
-        test.heart_rate = 69;
-        test.sp02 = 98;
+////        bool btn = button_polling_readstate();
+////        LOG("BUTTON: %d\n", btn);
+//        /* QUEUE TEST */
+//        if (i > OLED_SHUTDOWN)
+//        {
+//            i = 0;
+//        }
+//        if (i == OLED_HR_MEASURMENT)
+//        {
+//            test.new_state = i;
+//            cnt++;
+//            if (cnt > 3)
+//            {
+//                cnt = 0;
+//                i++;
+//            }
+//        }
+//        else
+//        {
+//            test.new_state = i++;
+//        }
+//
+//        test.heart_rate = 69;
+//        test.sp02 = 98;
 //        oled_app_queue_add(&test);
 
         /* LEDS */
         led_change_state(true);
-        vTaskDelay(100);
+        vTaskDelay(500);
         led_change_state(false);
-        vTaskDelay(100);
+        vTaskDelay(500);
     }
 }
 
@@ -149,9 +149,10 @@ int main(void)
     {
         xTaskCreate(task_test, "test", configMINIMAL_STACK_SIZE*4, NULL, 3, NULL);
 
-//        oled_app_task_create();
+        oled_app_task_create();
 
-//        hr_app_task_create();
+        hr_app_create_timer();
+        hr_app_task_create();
     }
 
     vTaskStartScheduler();

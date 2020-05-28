@@ -40,7 +40,7 @@
 #define OLED_QUEUE_LEN          5
 #define OLED_TASK_PRIORITY      (tskIDLE_PRIORITY + 1)
 
-#define MAX_MEAS_CNT            10
+#define MAX_MEAS_CNT            4
 
 //--------------------------------------------------------------------------------
 
@@ -145,21 +145,14 @@ void oled_app_task(void* params)
             if (ctx.state != OLED_HR_MEASURMENT)
             {
                 ctx.state = OLED_HR_MEASURMENT;
-                meas_cnt = 1;
-                ssd1306_draw_fill_rectangle(0, 60, (SSD1306_WIDTH/MAX_MEAS_CNT) * meas_cnt, 4, COLOR_WHITE);
+                meas_cnt = 0;
             }
             else
             {
-                if (meas_cnt < MAX_MEAS_CNT - 1)
-                {
-                    meas_cnt++;
-                    ssd1306_draw_fill_rectangle(0, 60, (SSD1306_WIDTH/MAX_MEAS_CNT) * meas_cnt, 4, COLOR_WHITE);
-                }
-                else
-                {
-                    ssd1306_draw_fill_rectangle(0, 60, SSD1306_WIDTH, 4, COLOR_WHITE);
-                }
+                meas_cnt++;
             }
+            meas_cnt %= 4;
+            ssd1306_draw_fill_rectangle(32 * meas_cnt, 60, 32, 4, COLOR_WHITE);
             ssd1306_set_cursor(0, 8);
             ssd1306_write_string("Measurment", Font_11x18, COLOR_WHITE);
             ssd1306_set_cursor(0, 32);
@@ -169,10 +162,12 @@ void oled_app_task(void* params)
         case OLED_HR_DISPLAY:
             ctx.state = OLED_HR_DISPLAY;
             ssd1306_fill(COLOR_BLACK);
-            ssd1306_set_cursor(0, 8);
-            snprintf(buffer, sizeof(buffer), "Sp02: %d%%", msg.sp02);
-            ssd1306_write_string(buffer, Font_11x18, COLOR_WHITE);
-            ssd1306_set_cursor(0, 32);
+//            ssd1306_set_cursor(0, 8);
+//            snprintf(buffer, sizeof(buffer), "Sp02: %d%%", msg.sp02);
+//            ssd1306_write_string(buffer, Font_11x18, COLOR_WHITE);
+            ssd1306_set_cursor(30, 8);
+            ssd1306_write_string("hh:mm", Font_11x18, COLOR_WHITE);
+            ssd1306_set_cursor(4, 42);
             snprintf(buffer, sizeof(buffer), "HR: %d BPM", msg.heart_rate);
             ssd1306_write_string(buffer, Font_11x18, COLOR_WHITE);
             break;

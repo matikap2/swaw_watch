@@ -14,6 +14,7 @@
 
 #include "ui.h"
 #include "debug_log.h"
+#include "hr_app.h"
 
 //--------------------------------------------------------------------------------
 
@@ -119,14 +120,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     if (GPIO_Pin == USER_BUTTON_PIN)
     {
-        for (uint32_t i = 0; i < 333000; i++)
-        {
-            asm("NOP");
-        }
-
-        if (!button_polling_readstate())
-        {
-            LOG("test");
-        }
+//        for (uint32_t i = 0; i < 333000; i++)
+//        {
+//            asm("NOP");
+//        }
+//
+//        if (!button_polling_readstate())
+//        {
+            LOG("Button irq!");
+            hr_app_switch_on_off();
+//        }
     }
 }
