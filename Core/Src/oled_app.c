@@ -98,10 +98,14 @@ void oled_app_task(void* params)
     struct oled_queue_msg msg;
     char buffer[16];
     volatile uint8_t meas_cnt = 0;
+    RTC_TimeTypeDef time;
+    RTC_DateTypeDef date;
 
     LOG("===> OLED task started!\n");
 
     ctx.state = OLED_OFF;
+
+    rtc_init();
 
     ssd1306_i2c_init();
     ssd1306_init();
@@ -165,10 +169,19 @@ void oled_app_task(void* params)
 //            ssd1306_set_cursor(0, 8);
 //            snprintf(buffer, sizeof(buffer), "Sp02: %d%%", msg.sp02);
 //            ssd1306_write_string(buffer, Font_11x18, COLOR_WHITE);
-            ssd1306_set_cursor(30, 8);
-            ssd1306_write_string("hh:mm", Font_11x18, COLOR_WHITE);
-            ssd1306_set_cursor(4, 42);
-            snprintf(buffer, sizeof(buffer), "HR: %d BPM", msg.heart_rate);
+
+            ssd1306_set_cursor(22, 2);
+            rtc_get_time(&time, &date);
+            //    LOG("Date: %d/%d/%d", date->Date, date->Month, date->Year);
+            snprintf(buffer, sizeof(buffer), "%02d:%02d:%02d", time.Hours, time.Minutes, time.Seconds);
+            ssd1306_write_string(buffer, Font_11x18, COLOR_WHITE);
+
+            ssd1306_set_cursor(30, 24);
+            snprintf(buffer, sizeof(buffer), "%02d/%02d/20%02d", date.Date, date.Month, date.Year);
+            ssd1306_write_string(buffer, Font_7x10, COLOR_WHITE);
+
+            ssd1306_set_cursor(30, 40);
+            snprintf(buffer, sizeof(buffer), "%d BPM", msg.heart_rate);
             ssd1306_write_string(buffer, Font_11x18, COLOR_WHITE);
             break;
 

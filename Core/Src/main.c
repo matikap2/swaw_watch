@@ -59,9 +59,10 @@ static void system_clock_config(void)
     /* Configure the main internal regulator output voltage */
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
     /* Initializes the CPU, AHB and APB busses clocks */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_LSE;
     RCC_OscInitStruct.HSIState = RCC_HSI_ON;
     RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+    RCC_OscInitStruct.LSEState = RCC_LSE_ON;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
     RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL6;
@@ -85,15 +86,6 @@ static void system_clock_config(void)
     }
 }
 
-static void hardware_init(void)
-{
-    HAL_Init();
-    system_clock_config();
-    debug_log_init();
-    led_init();
-//    button_init();
-}
-
 static void task_test(void* params)
 {
     struct oled_queue_msg test;
@@ -102,6 +94,8 @@ static void task_test(void* params)
 
     while (1)
     {
+//        rtc_get_time();
+
 ////        bool btn = button_polling_readstate();
 ////        LOG("BUTTON: %d\n", btn);
 //        /* QUEUE TEST */
@@ -142,12 +136,17 @@ static void task_test(void* params)
 
 int main(void)
 {
-    hardware_init();
+    HAL_Init();
+    system_clock_config();
+    debug_log_init();
+    led_init();
     button_interrupt_init();
+//    rtc_init();
+
 
     if (oled_app_queue_create())
     {
-        xTaskCreate(task_test, "test", configMINIMAL_STACK_SIZE*4, NULL, 3, NULL);
+//        xTaskCreate(task_test, "test", configMINIMAL_STACK_SIZE*4, NULL, 3, NULL);
 
         oled_app_task_create();
 

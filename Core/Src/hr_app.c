@@ -197,7 +197,6 @@ static void init_beat_ctx(void)
 
 static void hr_app_timer_callback(TimerHandle_t xTimer)
 {
-    static struct oled_queue_msg bpm_msg;
     /* Optionally do something if the pxTimer parameter is NULL. */
     configASSERT(xTimer);
 
@@ -206,13 +205,8 @@ static void hr_app_timer_callback(TimerHandle_t xTimer)
         ctx.was_first_callback = true;
     }
 
-    LOG("Beat timer elapsed!");
     ctx.bpm = ctx.beat_cnt * (MINUTE_IN_MS / CFG_HR_MEAS_MS);
-
-    bpm_msg.new_state = OLED_HR_DISPLAY;
-    bpm_msg.heart_rate = ctx.bpm;
-    bpm_msg.sp02 = 0;
-    oled_app_queue_add(&bpm_msg);
+    LOG("Beat timer elapsed! Beats: %d, HR: %d BPM", ctx.beat_cnt, ctx.bpm);
 
     ctx.beat_cnt = 0;
 }
@@ -237,6 +231,8 @@ void hr_app_task(void* params)
     struct oled_queue_msg oled_msg;
     uint16_t ir, red;
     uint8_t meas_cnt;
+    uint8_t tick_cnt = 0;
+    static struct oled_queue_msg bpm_msg;
 
     bool ready = false;
     ctx.start = false;
@@ -264,6 +260,7 @@ void hr_app_task(void* params)
 
                 init_beat_ctx();
                 max30100_reset();
+//                max30100_set_mode(MODE_HR_ONLY);
                 max30100_set_mode(MODE_SPO2_HR);
                 max30100_set_sample_rate(SAMPLE_RATE_100);
                 max30100_set_leds(PULSE_WIDTH_1600_uS, LED_27_1, LED_27_1);
@@ -280,7 +277,7 @@ void hr_app_task(void* params)
             max30100_read_sensor(&ir, &red);
             if (check_for_beat(ir))
             {
-                LOG("beat!");
+//                LOG("beat!");
                 ctx.beat_cnt++;
             }
         }
@@ -313,6 +310,19 @@ void hr_app_task(void* params)
             }
 
             meas_cnt++;
+        }
+        else if (ctx.was_first_callback && ready)
+        {
+            tick_cnt++;
+        }
+
+        if (ready && (tick_cnt % 100 == 0) && ctx.was_first_callback)
+        {
+            tick_cnt = 0;
+            bpm_msg.new_state = OLED_HR_DISPLAY;
+            bpm_msg.heart_rate = ctx.bpm;
+            bpm_msg.sp02 = 0;
+            oled_app_queue_add(&bpm_msg);
         }
 
         vTaskDelay(10);
